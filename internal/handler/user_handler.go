@@ -1,0 +1,45 @@
+package handler
+
+import (
+	"net/http"
+
+	"errors"
+
+	"github.com/gin-gonic/gin"
+	"github.com/iamrichmon/subscription-api/internal/service"
+)
+
+type UserHandler struct {
+	userService *service.UserService
+}
+
+func NewUserHandler(service *service.UserService) *UserHandler {
+	return &UserHandler{userService: service}
+}
+
+type CreateUserRequest struct {
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=12"`
+}
+
+func (h *UserHandler) Register(c *gin.Context) {
+	var req CreateUserRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.userService.Register(req.Name, req.Email, req.Password)
+	if err != nil {
+		if errors.Is(err, service.ErrEmailTaken) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, user)
+}

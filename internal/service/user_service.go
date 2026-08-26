@@ -24,6 +24,8 @@ func normalizeName(name string) string {
 	return strings.Join(strings.Fields(name), " ")
 }
 
+var ErrEmailTaken = errors.New("Email already registered.")
+
 func (s *UserService) Register(name, email, password string) (*model.User, error) {
 	name = normalizeName(name)
 
