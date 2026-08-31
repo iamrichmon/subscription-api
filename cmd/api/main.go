@@ -5,8 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/iamrichmon/subscription-api/internal/config"
+	"github.com/iamrichmon/subscription-api/internal/handler"
 	"github.com/iamrichmon/subscription-api/internal/model"
 	"github.com/iamrichmon/subscription-api/internal/repository"
+	"github.com/iamrichmon/subscription-api/internal/service"
 )
 
 func main() {
@@ -19,7 +21,20 @@ func main() {
 		log.Fatalf("failed to auto-migrate database: %v", err)
 	}
 
+	// wire dependencies
+
+	userRepo := repository.NewUserRepository(db)
+
+	userService := service.NewUserService(userRepo)
+
+	userHandler := handler.NewUserHandler(userService)
+
 	r := gin.Default()
+
+	v1 := r.Group("/v1")
+	{
+		v1.POST("/auth/register", userHandler.Register)
+	}
 
 	r.Run()
 }

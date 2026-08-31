@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"net/mail"
+	"strconv"
 	"strings"
 
 	"github.com/iamrichmon/subscription-api/internal/model"
@@ -26,6 +27,27 @@ func normalizeName(name string) string {
 
 var ErrEmailTaken = errors.New("Email already registered.")
 
+func hashPlainPass(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(hash), nil
+}
+
+func normalizeEmail(email string) (string, error) {
+
+	addr, err := mail.ParseAddress(strings.TrimSpace(email))
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.ToLower(addr.Address), nil
+}
+
 func (s *UserService) Register(name, email, password string) (*model.User, error) {
 	name = normalizeName(name)
 
@@ -34,19 +56,19 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 		return nil, errors.New("Name and password are required.")
 	}
 
-	addr, err := mail.ParseAddress(strings.TrimSpace(email))
+	// email validation
+
+	addr, err := normalizeEmail(email)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// email validation
-
-	email = strings.ToLower(addr.Address)
+	email = addr
 
 	existing, err := s.repo.FindByEmail(email)
 	if err == nil && existing != nil {
-		return nil, errors.New("Email already registered.")
+		return nil, ErrEmailTaken
 	}
 
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -55,7 +77,7 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 
 	// password hashed
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashed, err := hashPlainPass(password)
 
 	if err != nil {
 		return nil, err
@@ -64,7 +86,7 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 	user := &model.User{
 		Name:     name,
 		Email:    email,
-		Password: string(hashedPassword),
+		Password: hashed,
 		Plan:     model.FreeSubscription,
 	}
 
@@ -73,4 +95,33 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 	}
 
 	return user, nil
+}
+
+func (s *UserService) Login(email, password string) (string, error) {
+
+	addr, err := normalizeEmail(email)
+
+	if err != nil {
+		return "", err
+	}
+
+	email = addr
+
+	existing, err := s.repo.FindByEmail(email)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", err // DB/infra err, e.g. connection error
+	}
+
+	if existing == nil {
+		return "", errors.New("invalid credentials") // no such user
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(existing.Password), []byte(password)); err != nil {
+		return "", errors.New("invalid credentials")
+	}
+
+	//var jwtSecret = []byte("secret")
+
+	return strconv.FormatUint(uint64(existing.ID), 10), nil
+
 }
