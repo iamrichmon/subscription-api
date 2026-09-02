@@ -2,54 +2,30 @@ package service
 
 import (
 	"errors"
-	"net/mail"
-	"strconv"
+
 	"strings"
 
+	"github.com/iamrichmon/subscription-api/internal/auth"
 	"github.com/iamrichmon/subscription-api/internal/model"
 	"github.com/iamrichmon/subscription-api/internal/repository"
+	"github.com/iamrichmon/subscription-api/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type UserService struct {
-	repo *repository.UserRepository
+	repo      *repository.UserRepository
+	jwtSecret string
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
-}
-
-func normalizeName(name string) string {
-	name = strings.TrimSpace(name)
-	return strings.Join(strings.Fields(name), " ")
-}
-
-var ErrEmailTaken = errors.New("Email already registered.")
-
-func hashPlainPass(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(hash), nil
-}
-
-func normalizeEmail(email string) (string, error) {
-
-	addr, err := mail.ParseAddress(strings.TrimSpace(email))
-
-	if err != nil {
-		return "", err
-	}
-
-	return strings.ToLower(addr.Address), nil
+func NewUserService(repo *repository.UserRepository, jwtSecret string) *UserService {
+	return &UserService{
+		repo:      repo,
+		jwtSecret: jwtSecret}
 }
 
 func (s *UserService) Register(name, email, password string) (*model.User, error) {
-	name = normalizeName(name)
+	name = utils.NormalizeName(name)
 
 	// name validation
 	if name == "" || password == "" {
@@ -58,7 +34,7 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 
 	// email validation
 
-	addr, err := normalizeEmail(email)
+	addr, err := utils.NormalizeEmail(email)
 
 	if err != nil {
 		return nil, err
@@ -68,7 +44,7 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 
 	existing, err := s.repo.FindByEmail(email)
 	if err == nil && existing != nil {
-		return nil, ErrEmailTaken
+		return nil, utils.ErrEmailTaken
 	}
 
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -77,7 +53,7 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 
 	// password hashed
 
-	hashed, err := hashPlainPass(password)
+	hashed, err := utils.HashPlainPass(password)
 
 	if err != nil {
 		return nil, err
@@ -99,7 +75,11 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 
 func (s *UserService) Login(email, password string) (string, error) {
 
-	addr, err := normalizeEmail(email)
+	if strings.TrimSpace(password) == "" {
+		return "", utils.ErrInvalidCredentials
+	}
+
+	addr, err := utils.NormalizeEmail(email)
 
 	if err != nil {
 		return "", err
@@ -113,15 +93,18 @@ func (s *UserService) Login(email, password string) (string, error) {
 	}
 
 	if existing == nil {
-		return "", errors.New("invalid credentials") // no such user
+		return "", utils.ErrInvalidCredentials // no such user
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(existing.Password), []byte(password)); err != nil {
-		return "", errors.New("invalid credentials")
+		return "", utils.ErrInvalidCredentials // password mismatch
 	}
 
-	//var jwtSecret = []byte("secret")
+	token, err := auth.GenerateToken(existing.ID, existing.Email, s.jwtSecret)
+	if err != nil {
+		return "", err
+	}
 
-	return strconv.FormatUint(uint64(existing.ID), 10), nil
+	return token, nil
 
 }

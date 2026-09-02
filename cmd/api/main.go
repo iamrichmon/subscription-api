@@ -25,7 +25,11 @@ func main() {
 
 	userRepo := repository.NewUserRepository(db)
 
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, cfg.JWTSECRET)
+
+	if cfg.JWTSECRET == "" {
+		log.Fatal("JWT secret is required. Please set the JWTSECRET environment variable.")
+	}
 
 	userHandler := handler.NewUserHandler(userService)
 

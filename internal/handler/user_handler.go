@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/iamrichmon/subscription-api/internal/service"
+	"github.com/iamrichmon/subscription-api/internal/utils"
 )
 
 type UserHandler struct {
@@ -33,8 +34,12 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 	user, err := h.userService.Register(req.Name, req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, service.ErrEmailTaken) {
+		if errors.Is(err, utils.ErrEmailTaken) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, utils.ErrInvalidCredentials) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
