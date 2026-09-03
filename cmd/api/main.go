@@ -38,6 +38,7 @@ func main() {
 	v1 := r.Group("/v1")
 	{
 		v1.POST("/auth/register", userHandler.Register)
+		v1.POST("/auth/login", userHandler.Login)
 	}
 
 	r.Run()

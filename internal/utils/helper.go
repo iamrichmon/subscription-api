@@ -20,6 +20,9 @@ var ErrEmailTaken = errors.New("Email already registered.")
 // ErrInvalidCredentials is returned when the provided credentials are invalid.
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
+// ErrInternalServerError is returned when an internal server error occurs.
+var ErrInternalServerError = errors.New("internal server error")
+
 // HashPlainPass hashes a plain password using bcrypt.
 func HashPlainPass(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
