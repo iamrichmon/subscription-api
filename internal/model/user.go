@@ -12,9 +12,9 @@ const (
 
 type User struct {
 	ID        uint               `gorm:"primaryKey" json:"id"`
-	Name      string             `gorm:"not null" json:"name" binding:"required"`
-	Email     string             `gorm:"unique; not null" json:"email" binding:"required`
-	Password  string             `gorm:"not null" json:"-" binding:"required,min=12`
+	Name      string             `gorm:"not null" json:"name"`
+	Email     string             `gorm:"unique; not null" json:"email"`
+	Password  string             `gorm:"not null" json:"-"`
 	Plan      SubscriptionStatus `gorm:"type:varchar(20);not null;default:free" json:"plan"`
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at"`
