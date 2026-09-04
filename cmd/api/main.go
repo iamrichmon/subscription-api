@@ -15,6 +15,10 @@ func main() {
 
 	cfg := config.Load()
 
+	if cfg.JWTSECRET == "" {
+		log.Fatal("JWT secret is required. Please set the JWT_SECRET environment variable.")
+	}
+
 	db := repository.Connect(cfg)
 
 	if err := db.AutoMigrate(&model.User{}); err != nil {
@@ -26,10 +30,6 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	userService := service.NewUserService(userRepo, cfg.JWTSECRET)
-
-	if cfg.JWTSECRET == "" {
-		log.Fatal("JWT secret is required. Please set the JWTSECRET environment variable.")
-	}
 
 	userHandler := handler.NewUserHandler(userService)
 
