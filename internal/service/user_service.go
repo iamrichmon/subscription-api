@@ -108,3 +108,11 @@ func (s *UserService) Login(email, password string) (string, error) {
 	return token, nil
 
 }
+
+func (s *UserService) GetUserByID(id uint) (*model.User, error) {
+	user, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}

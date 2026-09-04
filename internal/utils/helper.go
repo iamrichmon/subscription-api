@@ -23,6 +23,9 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 // ErrInternalServerError is returned when an internal server error occurs.
 var ErrInternalServerError = errors.New("internal server error")
 
+// ErrInvalidAuthHeader is returned when the authorization header is invalid.
+var ErrInvalidAuthHeader = errors.New("invalid authorization header")
+
 // HashPlainPass hashes a plain password using bcrypt.
 func HashPlainPass(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

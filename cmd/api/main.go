@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/iamrichmon/subscription-api/internal/config"
 	"github.com/iamrichmon/subscription-api/internal/handler"
+	"github.com/iamrichmon/subscription-api/internal/middleware"
 	"github.com/iamrichmon/subscription-api/internal/model"
 	"github.com/iamrichmon/subscription-api/internal/repository"
 	"github.com/iamrichmon/subscription-api/internal/service"
@@ -36,9 +37,15 @@ func main() {
 	r := gin.Default()
 
 	v1 := r.Group("/v1")
+
+	protected := v1.Group("/")
+	protected.Use(middleware.AuthMiddleware(cfg.JWTSECRET))
 	{
+		protected.GET("/profile", userHandler.GetProfile)
+
 		v1.POST("/auth/register", userHandler.Register)
 		v1.POST("/auth/login", userHandler.Login)
+
 	}
 
 	r.Run()
