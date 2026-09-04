@@ -42,7 +42,7 @@ func main() {
 	protected.Use(middleware.AuthMiddleware(cfg.JWTSECRET))
 	{
 		// protected routes
-		protected.GET("/users", userHandler.GetProfile)
+		protected.GET("/user/:name", userHandler.GetProfile)
 
 		//public routes
 		v1.POST("/auth/register", userHandler.Register)
