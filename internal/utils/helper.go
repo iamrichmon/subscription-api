@@ -11,7 +11,7 @@ import (
 // name normalization: trim spaces and reduce multiple spaces to single space
 func NormalizeName(name string) string {
 	name = strings.TrimSpace(name)
-	return strings.Join(strings.Fields(name), " ")
+	return strings.Join(strings.Fields(strings.ToLower(name)), " ")
 }
 
 // ErrEmailTaken is returned when an email is already registered.

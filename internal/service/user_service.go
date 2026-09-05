@@ -118,7 +118,9 @@ func (s *UserService) GetUserByID(id uint) (*model.User, error) {
 }
 
 func (s *UserService) GetUserByName(name string) (*model.User, error) {
+	name = utils.NormalizeName(name)
 	user, err := s.repo.FindByName(name)
+
 	if err != nil {
 		return nil, err
 	}
