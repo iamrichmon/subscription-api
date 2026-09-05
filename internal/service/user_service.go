@@ -116,3 +116,11 @@ func (s *UserService) GetUserByID(id uint) (*model.User, error) {
 	}
 	return user, nil
 }
+
+func (s *UserService) GetUserByName(name string) (*model.User, error) {
+	user, err := s.repo.FindByName(name)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}

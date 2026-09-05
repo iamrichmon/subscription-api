@@ -87,5 +87,16 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
 		return
 	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *UserHandler) GetUserByName(c *gin.Context) {
+	name := c.Param("name")
+	user, err := h.userService.GetUserByName(name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, user)
 }
