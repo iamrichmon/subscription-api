@@ -40,15 +40,17 @@ func (h *UserHandler) Register(c *gin.Context) {
 	user, err := h.userService.Register(req.Name, req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, utils.ErrEmailTaken) {
-			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			c.JSON(http.StatusConflict, gin.H{"error": utils.ErrEmailTaken.Error()})
 			return
 		}
 		if errors.Is(err, utils.ErrInvalidCredentials) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": utils.ErrInvalidCredentials.Error()})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		if errors.Is(err, utils.ErrInternalServerError) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, user)
@@ -95,8 +97,16 @@ func (h *UserHandler) GetUserByName(c *gin.Context) {
 	name := c.Param("name")
 	user, err := h.userService.GetUserByName(name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
+		if errors.Is(err, utils.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": utils.ErrUserNotFound.Error()})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": utils.ErrInternalServerError.Error(),
+		})
 		return
 	}
+
 	c.JSON(http.StatusOK, user)
 }

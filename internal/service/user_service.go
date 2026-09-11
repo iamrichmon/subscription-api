@@ -42,15 +42,6 @@ func (s *UserService) Register(name, email, password string) (*model.User, error
 
 	email = addr
 
-	existing, err := s.repo.FindByEmail(email)
-	if err == nil && existing != nil {
-		return nil, utils.ErrEmailTaken
-	}
-
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
-	}
-
 	// password hashed
 
 	hashed, err := utils.HashPlainPass(password)
@@ -121,8 +112,13 @@ func (s *UserService) GetUserByName(name string) (*model.User, error) {
 	name = utils.NormalizeName(name)
 	user, err := s.repo.FindByName(name)
 
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, utils.ErrUserNotFound // no user found
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	return user, nil
 }

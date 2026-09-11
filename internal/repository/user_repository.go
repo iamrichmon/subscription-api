@@ -1,7 +1,11 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/iamrichmon/subscription-api/internal/model"
+	"github.com/iamrichmon/subscription-api/internal/utils"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +18,19 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 func (r *UserRepository) Create(user *model.User) error {
-	return r.db.Create(user).Error
+	err := r.db.Create(user).Error
+	if err == nil {
+		return nil
+	}
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == "23505" { // unique_violation
+			return utils.ErrEmailTaken
+		}
+	}
+
+	return err
 }
 
 func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
