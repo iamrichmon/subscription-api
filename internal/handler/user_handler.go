@@ -39,18 +39,15 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 	user, err := h.userService.Register(req.Name, req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, utils.ErrEmailTaken) {
-			c.JSON(http.StatusConflict, gin.H{"error": utils.ErrEmailTaken.Error()})
-			return
+		status := http.StatusInternalServerError
+		switch {
+		case errors.Is(err, utils.ErrEmailTaken):
+			status = http.StatusConflict
+		case errors.Is(err, utils.ErrInvalidCredentials):
+			status = http.StatusUnauthorized
 		}
-		if errors.Is(err, utils.ErrInvalidCredentials) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": utils.ErrInvalidCredentials.Error()})
-			return
-		}
-		if errors.Is(err, utils.ErrInternalServerError) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
-			return
-		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusCreated, user)
@@ -67,11 +64,12 @@ func (h *UserHandler) Login(c *gin.Context) {
 	token, err := h.userService.Login(req.Email, req.Password)
 
 	if err != nil {
-		if errors.Is(err, utils.ErrInvalidCredentials) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": utils.ErrInvalidCredentials.Error()})
-			return
+		status := http.StatusInternalServerError
+		switch {
+		case errors.Is(err, utils.ErrInvalidCredentials):
+			status = http.StatusUnauthorized
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 

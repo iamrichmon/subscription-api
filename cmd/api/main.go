@@ -28,11 +28,18 @@ func main() {
 
 	// wire dependencies
 
+	// user repository, service, and handler
 	userRepo := repository.NewUserRepository(db)
 
 	userService := service.NewUserService(userRepo, cfg.JWTSECRET)
 
 	userHandler := handler.NewUserHandler(userService)
+
+	// plan service and handler
+
+	planService := service.NewPlanService(model.Plans)
+
+	planHandler := handler.NewPlanHandler(planService)
 
 	r := gin.Default()
 
@@ -44,12 +51,14 @@ func main() {
 		// protected routes
 		protected.GET("/user/me", userHandler.GetProfile)
 
-		//public routes
-		v1.GET("/user/:name", userHandler.GetUserByName)
-		v1.POST("/auth/register", userHandler.Register)
-		v1.POST("/auth/login", userHandler.Login)
-
 	}
+
+	//public routes
+	v1.GET("/user/:name", userHandler.GetUserByName)
+	v1.POST("/auth/register", userHandler.Register)
+	v1.POST("/auth/login", userHandler.Login)
+	v1.GET("/plans", planHandler.ListPlans)
+	v1.GET("/plans/:id", planHandler.GetPlanByID)
 
 	r.Run()
 }
