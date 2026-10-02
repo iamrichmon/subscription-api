@@ -91,7 +91,7 @@ func (s *UserService) Login(email, password string) (string, error) {
 		return "", utils.ErrInvalidCredentials // password mismatch
 	}
 
-	token, err := auth.GenerateToken(existing.ID, existing.Email, s.jwtSecret)
+	token, err := auth.GenerateToken(existing.ID, existing.Email, "user", s.jwtSecret)
 	if err != nil {
 		return "", err
 	}

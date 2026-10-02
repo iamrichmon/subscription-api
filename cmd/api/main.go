@@ -22,7 +22,7 @@ func main() {
 
 	db := repository.Connect(cfg)
 
-	if err := db.AutoMigrate(&model.User{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Admin{}); err != nil {
 		log.Fatalf("failed to auto-migrate database: %v", err)
 	}
 
@@ -30,10 +30,13 @@ func main() {
 
 	// user repository, service, and handler
 	userRepo := repository.NewUserRepository(db)
-
 	userService := service.NewUserService(userRepo, cfg.JWTSECRET)
-
 	userHandler := handler.NewUserHandler(userService)
+
+	// admin repository, service, and handler
+	adminRepo := repository.NewAdminRepository(db)
+	adminService := service.NewAdminService(adminRepo, cfg.JWTSECRET)
+	adminHandler := handler.NewAdminHandler(adminService)
 
 	// plan service and handler
 
@@ -50,15 +53,24 @@ func main() {
 	{
 		// protected routes
 		protected.GET("/user/me", userHandler.GetProfile)
+		protected.GET("/user/:name", userHandler.GetUserByName)
 
 	}
 
-	//public routes
-	v1.GET("/user/:name", userHandler.GetUserByName)
+	//public user routes
 	v1.POST("/auth/register", userHandler.Register)
 	v1.POST("/auth/login", userHandler.Login)
 	v1.GET("/plans", planHandler.ListPlans)
 	v1.GET("/plans/:id", planHandler.GetPlanByID)
+
+	//public admin routes
+	v1.POST("/admin/login", adminHandler.Login)
+
+	admin := v1.Group("/admin")
+	admin.Use(middleware.AuthMiddleware(cfg.JWTSECRET), middleware.RequireAdmin())
+	{
+		admin.GET("/users", adminHandler.GetAllUsers)
+	}
 
 	r.Run()
 }
