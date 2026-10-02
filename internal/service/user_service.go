@@ -102,6 +102,10 @@ func (s *UserService) Login(email, password string) (string, error) {
 
 func (s *UserService) GetUserByID(id uint) (*model.User, error) {
 	user, err := s.repo.FindByID(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, utils.ErrUserNotFound // no user found
+	}
+
 	if err != nil {
 		return nil, err
 	}

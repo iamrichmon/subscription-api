@@ -83,6 +83,10 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		return
 	}
 	user, err := h.userService.GetUserByID(userID.(uint))
+	if errors.Is(err, utils.ErrUserNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": utils.ErrUserNotFound.Error()})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": utils.ErrInternalServerError.Error()})
 		return
