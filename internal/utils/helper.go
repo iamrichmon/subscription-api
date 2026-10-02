@@ -17,6 +17,9 @@ func NormalizeName(name string) string {
 // ErrEmailTaken is returned when an email is already registered.
 var ErrEmailTaken = errors.New("Email already registered.")
 
+// ErrInvalidEmail is returned when an email address is malformed.
+var ErrInvalidEmail = errors.New("invalid email address")
+
 // ErrInvalidCredentials is returned when the provided credentials are invalid.
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
@@ -47,7 +50,7 @@ func NormalizeEmail(email string) (string, error) {
 	addr, err := mail.ParseAddress(strings.TrimSpace(email))
 
 	if err != nil {
-		return "", ErrInvalidCredentials
+		return "", ErrInvalidEmail
 	}
 
 	return strings.ToLower(addr.Address), nil

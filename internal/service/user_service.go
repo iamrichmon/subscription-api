@@ -73,7 +73,7 @@ func (s *UserService) Login(email, password string) (string, error) {
 	addr, err := utils.NormalizeEmail(email)
 
 	if err != nil {
-		return "", err
+		return "", utils.ErrInvalidCredentials
 	}
 
 	email = addr

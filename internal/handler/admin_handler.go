@@ -25,7 +25,7 @@ type CreateAdminRequest struct {
 }
 
 type AdminLoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -43,8 +43,8 @@ func (h *AdminHandler) Register(c *gin.Context) {
 		switch {
 		case errors.Is(err, utils.ErrEmailTaken):
 			status = http.StatusConflict
-		case errors.Is(err, utils.ErrInvalidCredentials):
-			status = http.StatusUnauthorized
+		case errors.Is(err, utils.ErrInvalidEmail):
+			status = http.StatusBadRequest
 		}
 		c.JSON(status, gin.H{"error": err.Error()})
 		return
